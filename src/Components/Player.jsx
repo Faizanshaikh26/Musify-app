@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { usePlayer } from '../Context/PlayerContext';
 
 function Player() {
@@ -26,13 +26,12 @@ function Player() {
     }
   }, [audioRef, volume]);
 
-  const handleVolumeChange = (event) => {
+  const handleVolumeChange = useCallback((event) => {
     const newVolume = event.target.value;
     setVolume(newVolume);
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume;
-    }
-  };
+  }, []);
+
+  const formatTime = (minute, second) => `${minute}:${second < 10 ? `0${second}` : second}`;
 
   if (!currentTrack) {
     return null;
@@ -62,7 +61,7 @@ function Player() {
             ref={seekBg}
             onClick={seek}
           >
-            <div className="bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden h-2 ">
+            <div className="bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden h-2">
               <div
                 ref={seekBar}
                 className="bg-cyan-500 dark:bg-cyan-400 w-0 h-full transition-width duration-500"
@@ -85,17 +84,17 @@ function Player() {
           <div className="flex relative top-[-35px] left-[18%] text-sm leading-6 font-medium tabular-nums gap-1 lg:left-[30%] md:left-[40%]">
             <div className="text-cyan-500 dark:text-slate-100 text-[13px] md:text-[19px] lg:text-[20px]">
               {isPlaying || !isNaN(time.currentTime.minute)
-                ? `${time.currentTime.minute}:${time.currentTime.second < 10 ? `0${time.currentTime.second}` : time.currentTime.second}`
+                ? formatTime(time.currentTime.minute, time.currentTime.second)
                 : '0:00'}
             </div>
             /
             <div className="text-slate-200 dark:text-slate-400 text-[13px] md:text-[19px] lg:text-[20px]">
               {isPlaying || !isNaN(time.totalTime.minute)
-                ? `${time.totalTime.minute}:${time.totalTime.second < 10 ? `0${time.totalTime.second}` : time.totalTime.second}`
+                ? formatTime(time.totalTime.minute, time.totalTime.second)
                 : '0:00'}
             </div>
           </div>
-          <div className="flex justify-end lg:right-[15%] lg:top-[94px] md:left-[30%] md:top-16 absolute top-[14px] right-[10px] gap-3.5 text-slate-200 ">
+          <div className="flex justify-end lg:right-[15%] lg:top-[94px] md:left-[30%] md:top-16 absolute top-[14px] right-[10px] gap-3.5 text-slate-200">
             <i className="fa-solid fa-backward text-[23px] lg:text-[27px] cursor-pointer" onClick={previousTrack}></i>
             {isPlaying ? (
               <i className="fa-solid fa-pause text-[23px] lg:text-[27px] cursor-pointer" onClick={pause}></i>

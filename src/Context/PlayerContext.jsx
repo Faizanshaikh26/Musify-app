@@ -168,7 +168,7 @@ export const PlayerContextProvider = ({ children }) => {
     audioRef.current.addEventListener('ended', handleTrackEnd);
 
     return () => {
-      audioRef.current.ontimeupdate = null; // Cleanup
+      audioRef.current.ontimeupdate = null;
       audioRef.current.removeEventListener('ended', handleTrackEnd);
     };
   }, [currentTrack]);
@@ -185,7 +185,6 @@ export const PlayerContextProvider = ({ children }) => {
       const seekBgRect = seekBg.current.getBoundingClientRect();
       let offsetX = event.clientX - seekBgRect.left;
 
-      // Ensure the offset is within the bounds of the seek bar
       offsetX = Math.max(0, Math.min(offsetX, seekBgRect.width));
 
       const newTime = (offsetX / seekBgRect.width) * audioRef.current.duration;
@@ -216,16 +215,11 @@ export const PlayerContextProvider = ({ children }) => {
   }, []);
 
   const playWithId = async (songId) => {
-    console.log('Attempting to play song with ID:', songId);
-    console.log('Album data:', albumData); // Make sure albumData is populated
     const song = albumData.flatMap(album => album.songs).find(song => song._id === songId);
-    console.log('Found song:', song); // Check if the song is found
     if (song) {
-      // Find the album index and song index
       const albumIndex = albumData.findIndex(album => album.songs.includes(song));
       const songIndex = albumData[albumIndex].songs.findIndex(s => s._id === songId);
       setCurrentTrack({ ...song, albumIndex, songIndex });
-      console.log('Current track set:', currentTrack); // Check if currentTrack is set
       audioRef.current.currentTime = 0;
       audioRef.current.load();
       audioRef.current.addEventListener('canplaythrough', () => {
@@ -233,8 +227,6 @@ export const PlayerContextProvider = ({ children }) => {
           setIsPlaying(true);
         });
       }, { once: true });
-    } else {
-      console.log('Song with ID', songId, 'not found in the album.');
     }
   };
 
