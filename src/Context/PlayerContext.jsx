@@ -26,7 +26,7 @@ export const PlayerContextProvider = ({ children }) => {
 
   const fetchAlbumData = async () => {
     try {
-      const response = await fetch("https://musify-restapi.onrender.com", {
+      const response = await fetch("https://musify-rest-api.onrender.com", {
         method: "GET",
         headers: {},
       });

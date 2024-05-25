@@ -12,7 +12,7 @@ function Displayalbums() {
   useEffect(() => {
     const fetchAlbum = async () => {
       try {
-        const response = await axios.get(`https://musify-restapi.onrender.com/api/${id}`); // Update with your API endpoint
+        const response = await axios.get(`https://musify-rest-api.onrender.com/api/${id}`); // Update with your API endpoint
         setAlbum(response.data);
       } catch (error) {
         console.error('Error fetching album:', error);
