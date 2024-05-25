@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../Components/Navbar';
 import { usePlayer } from '../Context/PlayerContext';
-
+import clockicon from '../assets/clock_icon.png'
 function Displayalbums() {
   const { id } = useParams();
   const [album, setAlbum] = useState(null);
@@ -53,7 +53,7 @@ function Displayalbums() {
         <p className="flex items-center col-span-1 ml-3">Album</p>
         <p className="hidden sm:flex items-center col-span-1">Date</p>
         <div className="flex justify-center items-center col-span-1">
-          <img src="" alt="Clock Icon" className="w-4" />
+          <img src={clockicon} alt="Clock Icon" className="w-4" />
         </div>
       </div>
 

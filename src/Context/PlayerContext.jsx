@@ -23,7 +23,6 @@ export const PlayerContextProvider = ({ children }) => {
       minute: 0,
     },
   });
-  
 
   const fetchAlbumData = async () => {
     try {
@@ -50,7 +49,6 @@ export const PlayerContextProvider = ({ children }) => {
 
   const play = () => {
     if (audioRef.current) {
-      audioRef.current.currentTime = currentTime;
       const playPromise = audioRef.current.play();
       if (playPromise !== undefined) {
         playPromise
@@ -66,62 +64,64 @@ export const PlayerContextProvider = ({ children }) => {
 
   const pause = () => {
     if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
       audioRef.current.pause();
       setIsPlaying(false);
     }
   };
- 
+
   const nextTrack = async () => {
     if (currentTrack && albumData.length > 0) {
       const { albumIndex, songIndex } = currentTrack;
       const currentAlbum = albumData[albumIndex];
       if (currentAlbum && songIndex < currentAlbum.songs.length - 1) {
-        await setCurrentTrack({
+        setCurrentTrack({
           ...currentAlbum.songs[songIndex + 1],
           albumIndex,
           songIndex: songIndex + 1,
         });
-        await audioRef.current.play();
-        setIsPlaying(true);
       } else if (albumIndex < albumData.length - 1) {
-        await setCurrentTrack({
+        setCurrentTrack({
           ...albumData[albumIndex + 1].songs[0],
           albumIndex: albumIndex + 1,
           songIndex: 0,
         });
-        await audioRef.current.play();
-        setIsPlaying(true);
       }
+      audioRef.current.currentTime = 0;
+      audioRef.current.load();
+      audioRef.current.addEventListener('canplaythrough', () => {
+        audioRef.current.play().then(() => {
+          setIsPlaying(true);
+        });
+      }, { once: true });
     }
   };
-  
+
   const previousTrack = async () => {
     if (currentTrack && albumData.length > 0) {
       const { albumIndex, songIndex } = currentTrack;
       const currentAlbum = albumData[albumIndex];
       if (songIndex > 0) {
-        await setCurrentTrack({
+        setCurrentTrack({
           ...currentAlbum.songs[songIndex - 1],
           albumIndex,
           songIndex: songIndex - 1,
         });
-        await audioRef.current.play();
-        setIsPlaying(true);
       } else if (albumIndex > 0) {
-        await setCurrentTrack({
+        setCurrentTrack({
           ...albumData[albumIndex - 1].songs[albumData[albumIndex - 1].songs.length - 1],
           albumIndex: albumIndex - 1,
           songIndex: albumData[albumIndex - 1].songs.length - 1,
         });
-        await audioRef.current.play();
-        setIsPlaying(true);
       }
-      setCurrentTime(0); // Reset current time to 0 when switching to the previous track
+      audioRef.current.currentTime = 0;
+      audioRef.current.load();
+      audioRef.current.addEventListener('canplaythrough', () => {
+        audioRef.current.play().then(() => {
+          setIsPlaying(true);
+        });
+      }, { once: true });
     }
   };
-  
-  
 
   useEffect(() => {
     if (audioRef.current && currentTrack) {
@@ -131,14 +131,12 @@ export const PlayerContextProvider = ({ children }) => {
       audioRef.current.load();
       audioRef.current.addEventListener('canplaythrough', () => {
         setIsLoaded(true);
-      });
-      if (isPlaying) {
-        play();
-      }
+        if (isPlaying) {
+          play();
+        }
+      }, { once: true });
     }
-  }, [currentTrack, isPlaying]);
-
-
+  }, [currentTrack]);
 
   useEffect(() => {
     const updateSeekBarWidth = () => {
@@ -147,7 +145,7 @@ export const PlayerContextProvider = ({ children }) => {
         const percentage = (currentTime / duration) * 100;
         seekBar.current.style.width = `${percentage}%`;
         seekRing.current.style.left = `${percentage}%`;
-  
+
         setTime({
           currentTime: {
             second: Math.floor(currentTime % 60),
@@ -160,14 +158,20 @@ export const PlayerContextProvider = ({ children }) => {
         });
       }
     };
-  
+
     audioRef.current.ontimeupdate = updateSeekBarWidth;
-  
+
+    const handleTrackEnd = () => {
+      nextTrack();
+    };
+
+    audioRef.current.addEventListener('ended', handleTrackEnd);
+
     return () => {
       audioRef.current.ontimeupdate = null; // Cleanup
+      audioRef.current.removeEventListener('ended', handleTrackEnd);
     };
-  }, []);
-  
+  }, [currentTrack]);
 
   const seek = (event) => {
     const seekBgRect = seekBg.current.getBoundingClientRect();
@@ -220,23 +224,19 @@ export const PlayerContextProvider = ({ children }) => {
       // Find the album index and song index
       const albumIndex = albumData.findIndex(album => album.songs.includes(song));
       const songIndex = albumData[albumIndex].songs.findIndex(s => s._id === songId);
-      await setCurrentTrack({ ...song, albumIndex, songIndex });
+      setCurrentTrack({ ...song, albumIndex, songIndex });
       console.log('Current track set:', currentTrack); // Check if currentTrack is set
-      await audioRef.current.play();
-      console.log('Audio playing:', audioRef.current); // Check if audio is playing
-      setIsPlaying(true);
-      console.log('IsPlaying:', isPlaying); // Check if isPlaying is set to true
+      audioRef.current.currentTime = 0;
+      audioRef.current.load();
+      audioRef.current.addEventListener('canplaythrough', () => {
+        audioRef.current.play().then(() => {
+          setIsPlaying(true);
+        });
+      }, { once: true });
     } else {
       console.log('Song with ID', songId, 'not found in the album.');
     }
   };
-  
-  
-  
-
-
- 
-
 
   const contextValue = {
     albumData,
