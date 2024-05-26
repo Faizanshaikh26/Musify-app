@@ -29,7 +29,6 @@ body {
   position: fixed;
   top: 0;
   left: 0;
-  display: none;
 }
 .sidebar li a.active,
 .sidebar li a.active .link_name,

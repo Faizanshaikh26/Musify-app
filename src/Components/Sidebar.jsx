@@ -15,7 +15,7 @@ function Sidebar({ children }) {
       <div className={`sidebar ${isOpen ? 'open' : ''}`}>
         <div className="logo_details">
           <i className="bx bxl-audible icon"></i>
-          <div className="logo_name">Code Effect</div>
+          <div className="logo_name">Musify</div>
           <i className="bx bx-menu" id="btn" onClick={toggleSidebar}></i>
         </div>
         <ul className="nav-list">
