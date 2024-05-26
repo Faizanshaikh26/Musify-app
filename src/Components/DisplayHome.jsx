@@ -1,29 +1,46 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { usePlayer } from "../Context/PlayerContext";
-import AlbumItem from '../albums/Albumitem'
+import AlbumItem from '../albums/Albumitem';
 
 function DisplayHome() {
   const [albumData, setAlbumData] = useState([]);
+  const [loading, setLoading] = useState(true); // State to track loading
   const { playWithId } = usePlayer(); // Ensure usePlayer and playWithId are properly defined and used
 
-  const fetchAlbumData = async () => {
+  const fetchAlbumData = useCallback(async () => {
     try {
+      console.log("Fetching album data...");
       const response = await fetch("https://musify-rest-api.onrender.com", {
         method: "GET",
         headers: {
           "Content-Type": "application/json"
         }
       });
+      console.log("Response received:", response);
       const data = await response.json();
+      console.log("Data received:", data);
       setAlbumData(data.albums);
     } catch (error) {
       console.error("Error fetching album data:", error);
+    } finally {
+      setLoading(false); // Set loading to false once fetch is complete
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchAlbumData();
-  }, []);
+    const fetchData = async () => {
+      const startTime = performance.now();
+      await fetchAlbumData();
+      const endTime = performance.now();
+      console.log(`Fetch and render time: ${endTime - startTime} ms`);
+    };
+
+    fetchData();
+  }, [fetchAlbumData]);
+
+  if (loading) {
+    return <div>Loading...</div>; // Show loading indicator while fetching data
+  }
 
   const keywords = [
     "Top 100 India",
@@ -66,7 +83,7 @@ function DisplayHome() {
         <h1 className="my-5 font-bold text-2xl">Most Romantic</h1>
         <div className="flex overflow-auto">
           {filteredSingleAlbums.map((album, index) => (
-            <div key={index} className="flex ">
+            <div key={index} className="flex">
               {album.songs.map((song, songIndex) => (
                 <div
                   key={songIndex}
