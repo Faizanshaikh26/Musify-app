@@ -73,19 +73,7 @@ export const PlayerContextProvider = ({ children }) => {
     }
   };
 
-  const loadAndPlayTrack = async () => {
-    if (audioRef.current && currentTrack) {
-      setIsLoading(true);
-      audioRef.current.src = currentTrack.songUrl;
-      audioRef.current.load();
-      audioRef.current.oncanplaythrough = () => {
-        setIsLoading(false);
-        play();
-      };
-    }
-  };
-
-  const nextTrack = () => {
+  const nextTrack = async () => {
     if (currentTrack && albumData.length > 0) {
       const { albumIndex, songIndex } = currentTrack;
       const currentAlbum = albumData[albumIndex];
@@ -103,11 +91,14 @@ export const PlayerContextProvider = ({ children }) => {
         });
       }
       audioRef.current.currentTime = 0;
-      loadAndPlayTrack();
+      audioRef.current.load();
+      audioRef.current.addEventListener('canplaythrough', () => {
+        play();
+      }, { once: true });
     }
   };
 
-  const previousTrack = () => {
+  const previousTrack = async () => {
     if (currentTrack && albumData.length > 0) {
       const { albumIndex, songIndex } = currentTrack;
       const currentAlbum = albumData[albumIndex];
@@ -125,13 +116,25 @@ export const PlayerContextProvider = ({ children }) => {
         });
       }
       audioRef.current.currentTime = 0;
-      loadAndPlayTrack();
+      audioRef.current.load();
+      audioRef.current.addEventListener('canplaythrough', () => {
+        play();
+      }, { once: true });
     }
   };
 
   useEffect(() => {
-    if (currentTrack) {
-      loadAndPlayTrack();
+    if (audioRef.current && currentTrack) {
+      setIsLoading(true);
+      audioRef.current.src = currentTrack.songUrl;
+      audioRef.current.currentTime = 0;
+      audioRef.current.load();
+      audioRef.current.addEventListener('canplaythrough', () => {
+        setIsLoading(false);
+        if (isPlaying) {
+          play();
+        }
+      }, { once: true });
     }
   }, [currentTrack]);
 
@@ -156,23 +159,17 @@ export const PlayerContextProvider = ({ children }) => {
       }
     };
 
-    if (audioRef.current) {
-      audioRef.current.ontimeupdate = updateSeekBarWidth;
-    }
+    audioRef.current.ontimeupdate = updateSeekBarWidth;
 
     const handleTrackEnd = () => {
       nextTrack();
     };
 
-    if (audioRef.current) {
-      audioRef.current.addEventListener('ended', handleTrackEnd);
-    }
+    audioRef.current.addEventListener('ended', handleTrackEnd);
 
     return () => {
-      if (audioRef.current) {
-        audioRef.current.ontimeupdate = null;
-        audioRef.current.removeEventListener('ended', handleTrackEnd);
-      }
+      audioRef.current.ontimeupdate = null;
+      audioRef.current.removeEventListener('ended', handleTrackEnd);
     };
   }, [currentTrack]);
 
@@ -224,7 +221,10 @@ export const PlayerContextProvider = ({ children }) => {
       const songIndex = albumData[albumIndex].songs.findIndex(s => s._id === songId);
       setCurrentTrack({ ...song, albumIndex, songIndex });
       audioRef.current.currentTime = 0;
-      loadAndPlayTrack();
+      audioRef.current.load();
+      audioRef.current.addEventListener('canplaythrough', () => {
+        play();
+      }, { once: true });
     }
   };
 
