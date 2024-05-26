@@ -1,3 +1,4 @@
+// PlayerContext.jsx
 import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 
 export const PlayerContext = createContext();
@@ -10,9 +11,9 @@ export const PlayerContextProvider = ({ children }) => {
   const [albumData, setAlbumData] = useState([]);
   const [currentTrack, setCurrentTrack] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Add loading state
   const audioRef = useRef(null);
   const [currentTime, setCurrentTime] = useState(0);
-  const [isLoaded, setIsLoaded] = useState(false);
   const [time, setTime] = useState({
     currentTime: {
       second: 0,
@@ -47,8 +48,9 @@ export const PlayerContextProvider = ({ children }) => {
     fetchAlbumData();
   }, []);
 
-  const play = () => {
+  const play = async () => {
     if (audioRef.current) {
+      setIsLoading(true);
       const playPromise = audioRef.current.play();
       if (playPromise !== undefined) {
         playPromise
@@ -57,6 +59,9 @@ export const PlayerContextProvider = ({ children }) => {
           })
           .catch(error => {
             console.error('Error while starting playback:', error);
+          })
+          .finally(() => {
+            setIsLoading(false);
           });
       }
     }
@@ -89,9 +94,7 @@ export const PlayerContextProvider = ({ children }) => {
       audioRef.current.currentTime = 0;
       audioRef.current.load();
       audioRef.current.addEventListener('canplaythrough', () => {
-        audioRef.current.play().then(() => {
-          setIsPlaying(true);
-        });
+        play();
       }, { once: true });
     }
   };
@@ -116,21 +119,19 @@ export const PlayerContextProvider = ({ children }) => {
       audioRef.current.currentTime = 0;
       audioRef.current.load();
       audioRef.current.addEventListener('canplaythrough', () => {
-        audioRef.current.play().then(() => {
-          setIsPlaying(true);
-        });
+        play();
       }, { once: true });
     }
   };
 
   useEffect(() => {
     if (audioRef.current && currentTrack) {
-      setIsLoaded(false);
+      setIsLoading(true);
       audioRef.current.src = currentTrack.songUrl;
       audioRef.current.currentTime = 0;
       audioRef.current.load();
       audioRef.current.addEventListener('canplaythrough', () => {
-        setIsLoaded(true);
+        setIsLoading(false);
         if (isPlaying) {
           play();
         }
@@ -223,9 +224,7 @@ export const PlayerContextProvider = ({ children }) => {
       audioRef.current.currentTime = 0;
       audioRef.current.load();
       audioRef.current.addEventListener('canplaythrough', () => {
-        audioRef.current.play().then(() => {
-          setIsPlaying(true);
-        });
+        play();
       }, { once: true });
     }
   };
@@ -234,12 +233,12 @@ export const PlayerContextProvider = ({ children }) => {
     albumData,
     currentTrack,
     isPlaying,
+    isLoading, // Provide isLoading state in context
     setCurrentTrack,
     play,
     pause,
     nextTrack,
     previousTrack,
-    isLoaded,
     audioRef,
     currentTime,
     setCurrentTime,
