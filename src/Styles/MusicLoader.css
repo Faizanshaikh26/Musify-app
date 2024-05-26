@@ -1,0 +1,43 @@
+
+  
+  .music-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 20px; /* Adjust this value to your desired width */
+    height: 200px; /* Adjust this value to your desired height */
+    animation: bounce 1s ease-in-out infinite;
+  }
+  
+  .music-symbol {
+    width: 100px;
+    height: 100px;
+    margin-left: 300px;
+  }
+  
+  .loading-text {
+    margin-top: 20px;
+    font-size: 20px;
+    color: #666;
+    animation: fade 1.5s infinite;
+    opacity: 0;
+  }
+  
+  @keyframes fade {
+    0%, 100% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes bounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+  
