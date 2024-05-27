@@ -15,13 +15,13 @@ function App() {
   return (
     <div className='bg-black text-white h-full'>
       <Sidebar>
+       
         <Suspense fallback={<div>Loading...</div>}>
           <Routes>
             <Route path='/' element={<Home />} />
             <Route path='/album/:id' element={<Displayalbums />} />
           </Routes>
         </Suspense>
-        <Player />
       </Sidebar>
       <audio ref={audioRef} preload='auto' />
     </div>
