@@ -10,27 +10,18 @@ export const PlayerContextProvider = ({ children }) => {
   const [albumData, setAlbumData] = useState([]);
   const [currentTrack, setCurrentTrack] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); // Add loading state
+  const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [time, setTime] = useState({
-    currentTime: {
-      second: 0,
-      minute: 0,
-    },
-    totalTime: {
-      second: 0,
-      minute: 0,
-    },
+    currentTime: { second: 0, minute: 0 },
+    totalTime: { second: 0, minute: 0 },
   });
 
   const fetchAlbumData = async () => {
     try {
-      const response = await fetch("https://musify-rest-api.onrender.com", {
-        method: "GET",
-        headers: {},
-      });
-
+      setIsLoading(true);
+      const response = await fetch("https://musify-rest-api.onrender.com");
       if (response.ok) {
         const result = await response.json();
         setAlbumData(result.albums);
@@ -38,8 +29,10 @@ export const PlayerContextProvider = ({ children }) => {
           setCurrentTrack({ albumIndex: 0, songIndex: 0, ...result.albums[0].songs[0] });
         }
       }
+      setIsLoading(false);
     } catch (err) {
       console.error(err);
+      setIsLoading(false);
     }
   };
 
@@ -47,21 +40,13 @@ export const PlayerContextProvider = ({ children }) => {
     fetchAlbumData();
   }, []);
 
-  const play = async () => {
+  const play = () => {
     if (audioRef.current) {
-      setIsLoading(true);
       const playPromise = audioRef.current.play();
       if (playPromise !== undefined) {
         playPromise
-          .then(() => {
-            setIsPlaying(true);
-          })
-          .catch(error => {
-            console.error('Error while starting playback:', error);
-          })
-          .finally(() => {
-            setIsLoading(false);
-          });
+          .then(() => setIsPlaying(true))
+          .catch(error => console.error('Error while starting playback:', error));
       }
     }
   };
@@ -73,7 +58,16 @@ export const PlayerContextProvider = ({ children }) => {
     }
   };
 
-  const nextTrack = async () => {
+  const loadTrack = () => {
+    if (audioRef.current && currentTrack) {
+      setIsLoading(true);
+      audioRef.current.src = currentTrack.songUrl;
+      audioRef.current.load();
+      audioRef.current.oncanplaythrough = () => setIsLoading(false);
+    }
+  };
+
+  const nextTrack = () => {
     if (currentTrack && albumData.length > 0) {
       const { albumIndex, songIndex } = currentTrack;
       const currentAlbum = albumData[albumIndex];
@@ -91,14 +85,11 @@ export const PlayerContextProvider = ({ children }) => {
         });
       }
       audioRef.current.currentTime = 0;
-      audioRef.current.load();
-      audioRef.current.addEventListener('canplaythrough', () => {
-        play();
-      }, { once: true });
+      loadTrack();
     }
   };
 
-  const previousTrack = async () => {
+  const previousTrack = () => {
     if (currentTrack && albumData.length > 0) {
       const { albumIndex, songIndex } = currentTrack;
       const currentAlbum = albumData[albumIndex];
@@ -116,25 +107,13 @@ export const PlayerContextProvider = ({ children }) => {
         });
       }
       audioRef.current.currentTime = 0;
-      audioRef.current.load();
-      audioRef.current.addEventListener('canplaythrough', () => {
-        play();
-      }, { once: true });
+      loadTrack();
     }
   };
 
   useEffect(() => {
-    if (audioRef.current && currentTrack) {
-      setIsLoading(true);
-      audioRef.current.src = currentTrack.songUrl;
-      audioRef.current.currentTime = 0;
-      audioRef.current.load();
-      audioRef.current.addEventListener('canplaythrough', () => {
-        setIsLoading(false);
-        if (isPlaying) {
-          play();
-        }
-      }, { once: true });
+    if (currentTrack) {
+      loadTrack();
     }
   }, [currentTrack]);
 
@@ -232,7 +211,7 @@ export const PlayerContextProvider = ({ children }) => {
     albumData,
     currentTrack,
     isPlaying,
-    isLoading, // Provide isLoading state in context
+    isLoading,
     setCurrentTrack,
     play,
     pause,
@@ -247,13 +226,13 @@ export const PlayerContextProvider = ({ children }) => {
     seekBar,
     seekBg,
     seekRing,
-    playWithId
+    playWithId,
   };
 
   return (
     <PlayerContext.Provider value={contextValue}>
       {children}
-      <audio ref={audioRef} preload="auto" />
+      {/* <audio ref={audioRef} preload="auto" /> */}
     </PlayerContext.Provider>
   );
 };
