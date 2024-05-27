@@ -22,6 +22,7 @@ function App() {
             <Route path='/album/:id' element={<Displayalbums />} />
           </Routes>
         </Suspense>
+        <Player/>
       </Sidebar>
       <audio ref={audioRef} preload='auto' />
     </div>

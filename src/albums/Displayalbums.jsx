@@ -4,6 +4,7 @@ import axios from 'axios';
 import Navbar from '../Components/Navbar';
 import { usePlayer } from '../Context/PlayerContext';
 import clockicon from '../assets/clock_icon.png';
+import Footer from '../Components/Footer';
 
 function Displayalbums() {
   const { id } = useParams();
@@ -90,6 +91,8 @@ function Displayalbums() {
           <p className="text-[15px] text-center truncate col-span-1">{(song.duration / 60).toFixed(2)} min</p>
         </div>
       ))}
+      <Footer/>
+      
     </>
   );
 }

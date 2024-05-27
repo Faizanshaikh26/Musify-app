@@ -40,17 +40,25 @@ export const PlayerContextProvider = ({ children }) => {
     fetchAlbumData();
   }, []);
 
-  const play = () => {
+  
+  const play = async () => {
     if (audioRef.current) {
+      setIsLoading(true);
       const playPromise = audioRef.current.play();
       if (playPromise !== undefined) {
         playPromise
-          .then(() => setIsPlaying(true))
-          .catch(error => console.error('Error while starting playback:', error));
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch(error => {
+            console.error('Error while starting playback:', error);
+          })
+          .finally(() => {
+            setIsLoading(false);
+          });
       }
     }
   };
-
   const pause = () => {
     if (audioRef.current) {
       audioRef.current.pause();
@@ -63,7 +71,10 @@ export const PlayerContextProvider = ({ children }) => {
       setIsLoading(true);
       audioRef.current.src = currentTrack.songUrl;
       audioRef.current.load();
-      audioRef.current.oncanplaythrough = () => setIsLoading(false);
+      audioRef.current.oncanplaythrough = () => {
+        setIsLoading(false);
+        play();
+      };
     }
   };
 
