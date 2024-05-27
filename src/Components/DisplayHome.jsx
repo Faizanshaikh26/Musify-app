@@ -4,8 +4,8 @@ import AlbumItem from '../albums/Albumitem';
 
 function DisplayHome() {
   const [albumData, setAlbumData] = useState([]);
-  const [loading, setLoading] = useState(true); // State to track loading
-  const { playWithId } = usePlayer(); // Ensure usePlayer and playWithId are properly defined and used
+  const [loading, setLoading] = useState(true);
+  const { playWithId } = usePlayer();
 
   const fetchAlbumData = useCallback(async () => {
     try {
@@ -23,7 +23,7 @@ function DisplayHome() {
     } catch (error) {
       console.error("Error fetching album data:", error);
     } finally {
-      setLoading(false); // Set loading to false once fetch is complete
+      setLoading(false);
     }
   }, []);
 
@@ -39,7 +39,7 @@ function DisplayHome() {
   }, [fetchAlbumData]);
 
   if (loading) {
-    return <div>Loading...</div>; // Show loading indicator while fetching data
+    return <div>Loading...</div>;
   }
 
   const keywords = [
