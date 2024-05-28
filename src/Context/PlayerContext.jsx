@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback, useMemo } from "react";
 
 export const PlayerContext = createContext();
 export const usePlayer = () => useContext(PlayerContext);
@@ -18,7 +18,6 @@ export const PlayerContextProvider = ({ children }) => {
     totalTime: { second: 0, minute: 0 },
   });
 
-  // Memoize fetchAlbumData function
   const fetchAlbumData = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -62,10 +61,8 @@ export const PlayerContextProvider = ({ children }) => {
   const loadTrack = useCallback(() => {
     if (audioRef.current && currentTrack) {
       setIsLoading(true);
-
       audioRef.current.src = currentTrack.songUrl;
       audioRef.current.load();
-
       audioRef.current.oncanplaythrough = () => {
         setIsLoading(false);
         play();
@@ -93,7 +90,7 @@ export const PlayerContextProvider = ({ children }) => {
       audioRef.current.currentTime = 0;
       loadTrack();
     }
-  }, [albumData, currentTrack, loadTrack]);
+  }, [currentTrack, albumData, loadTrack]);
 
   const previousTrack = useCallback(() => {
     if (currentTrack && albumData.length > 0) {
@@ -115,7 +112,7 @@ export const PlayerContextProvider = ({ children }) => {
       audioRef.current.currentTime = 0;
       loadTrack();
     }
-  }, [albumData, currentTrack, loadTrack]);
+  }, [currentTrack, albumData, loadTrack]);
 
   useEffect(() => {
     if (currentTrack) {
@@ -128,8 +125,8 @@ export const PlayerContextProvider = ({ children }) => {
       if (audioRef.current && audioRef.current.duration) {
         const { currentTime, duration } = audioRef.current;
         const percentage = (currentTime / duration) * 100;
-        seekBar.current.style.width = `${percentage}%`;
-        seekRing.current.style.left = `${percentage}%`;
+        if (seekBar.current) seekBar.current.style.width = `${percentage}%`;
+        if (seekRing.current) seekRing.current.style.left = `${percentage}%`;
 
         setTime({
           currentTime: {
@@ -144,34 +141,33 @@ export const PlayerContextProvider = ({ children }) => {
       }
     };
 
-    audioRef.current.ontimeupdate = updateSeekBarWidth;
-
-    const handleTrackEnd = () => {
-      nextTrack();
-    };
-
-    audioRef.current.addEventListener('ended', handleTrackEnd);
+    if (audioRef.current) {
+      audioRef.current.ontimeupdate = updateSeekBarWidth;
+      audioRef.current.addEventListener('ended', nextTrack);
+    }
 
     return () => {
-      audioRef.current.ontimeupdate = null;
-      audioRef.current.removeEventListener('ended', handleTrackEnd);
+      if (audioRef.current) {
+        audioRef.current.ontimeupdate = null;
+        audioRef.current.removeEventListener('ended', nextTrack);
+      }
     };
-  }, [currentTrack, nextTrack]);
+  }, [nextTrack]);
 
   const seek = useCallback((event) => {
-    const seekBgRect = seekBg.current.getBoundingClientRect();
-    const offsetX = event.clientX - seekBgRect.left;
-    const newTime = (offsetX / seekBgRect.width) * audioRef.current.duration;
-    audioRef.current.currentTime = newTime;
+    if (seekBg.current) {
+      const seekBgRect = seekBg.current.getBoundingClientRect();
+      const offsetX = event.clientX - seekBgRect.left;
+      const newTime = (offsetX / seekBgRect.width) * audioRef.current.duration;
+      audioRef.current.currentTime = newTime;
+    }
   }, []);
 
   const handleMouseMove = useCallback((event) => {
     if (seekRing.current && seekRing.current.isDragging) {
       const seekBgRect = seekBg.current.getBoundingClientRect();
       let offsetX = event.clientX - seekBgRect.left;
-
       offsetX = Math.max(0, Math.min(offsetX, seekBgRect.width));
-
       const newTime = (offsetX / seekBgRect.width) * audioRef.current.duration;
       audioRef.current.currentTime = newTime;
     }
@@ -207,13 +203,11 @@ export const PlayerContextProvider = ({ children }) => {
       setCurrentTrack({ ...song, albumIndex, songIndex });
       audioRef.current.currentTime = 0;
       audioRef.current.load();
-      audioRef.current.addEventListener('canplaythrough', () => {
-        play();
-      }, { once: true });
+      audioRef.current.addEventListener('canplaythrough', play, { once: true });
     }
   }, [albumData, play]);
 
-  const contextValue = {
+  const contextValue = useMemo(() => ({
     albumData,
     currentTrack,
     isPlaying,
@@ -233,12 +227,25 @@ export const PlayerContextProvider = ({ children }) => {
     seekBg,
     seekRing,
     playWithId,
-  };
+  }), [
+    albumData,
+    currentTrack,
+    isPlaying,
+    isLoading,
+    play,
+    pause,
+    nextTrack,
+    previousTrack,
+    currentTime,
+    time,
+    seek,
+    handleMouseDown,
+    playWithId,
+  ]);
 
   return (
     <PlayerContext.Provider value={contextValue}>
       {children}
-      <audio ref={audioRef} preload="auto" />
     </PlayerContext.Provider>
   );
 };

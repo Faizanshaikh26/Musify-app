@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { usePlayer } from "../Context/PlayerContext";
 import AlbumItem from '../albums/Albumitem';
 
@@ -8,57 +8,49 @@ function DisplayHome() {
   const { playWithId } = usePlayer();
 
   const fetchAlbumData = useCallback(async () => {
+    const startTime = performance.now();
     try {
-      console.log("Fetching album data...");
       const response = await fetch("https://musify-rest-api.onrender.com", {
         method: "GET",
         headers: {
           "Content-Type": "application/json"
         }
       });
-      console.log("Response received:", response);
       const data = await response.json();
-      console.log("Data received:", data);
       setAlbumData(data.albums);
     } catch (error) {
       console.error("Error fetching album data:", error);
     } finally {
       setLoading(false);
+      const endTime = performance.now();
+      console.log(`Fetch and render time: ${endTime - startTime} ms`);
     }
   }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const startTime = performance.now();
-      await fetchAlbumData();
-      const endTime = performance.now();
-      console.log(`Fetch and render time: ${endTime - startTime} ms`);
-    };
-
-    fetchData();
+    fetchAlbumData();
   }, [fetchAlbumData]);
+
+  const keywords = useMemo(() => ["Top 100 India", "Top 50 Global", "Trending"], []);
+  const singleKeywords = useMemo(() => ["Most Romantic"], []);
+
+  const filteredAlbums = useMemo(() => {
+    return albumData.filter((album) =>
+      keywords.some((keyword) => album.title.includes(keyword))
+    );
+  }, [albumData, keywords]);
+
+  const filteredSingleAlbums = useMemo(() => {
+    return albumData.filter((singleAlbum) =>
+      singleKeywords.some((singleKeyword) =>
+        singleAlbum.title.toLowerCase().includes(singleKeyword.toLowerCase())
+      )
+    );
+  }, [albumData, singleKeywords]);
 
   if (loading) {
     return <div>Loading...</div>;
   }
-
-  const keywords = [
-    "Top 100 India",
-    "Top 50 Global",
-    "Trending",
-    "Most Romantic"
-  ];
-
-  const filteredAlbums = albumData.filter((album) =>
-    keywords.some((keyword) => album.title.includes(keyword))
-  );
-
-  const singleKeywords = ["Most Romantic"];
-  const filteredSingleAlbums = albumData.filter((singleAlbum) =>
-    singleKeywords.some((singleKeyword) =>
-      singleAlbum.title.toLowerCase().includes(singleKeyword.toLowerCase())
-    )
-  );
 
   return (
     <div>
